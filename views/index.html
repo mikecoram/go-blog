@@ -1,1 +1,8 @@
 <h1>Home</h1>
+<a href="/new-post/">New Post</a>
+<h2>Posts:</h2> 
+<ul>
+    {{range .Posts}}
+        <li><a href="/post/{{.URLSlug}}">{{.Title}}</a></li>
+    {{end}}
+</ul>

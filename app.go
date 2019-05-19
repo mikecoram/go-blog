@@ -16,10 +16,34 @@ import (
 type Post struct {
 	Title   string
 	Content string
+	URLSlug string
+}
+
+// HomeData object
+type HomeData struct {
+	Posts []Post
 }
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
-	body, _ := ioutil.ReadFile("views/index.html")
+	db := getDbConnection()
+	rows, err := db.Query("SELECT title, url_slug FROM posts")
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "Something went wrong!", http.StatusInternalServerError)
+	}
+	var posts []Post
+	for rows.Next() {
+		var (
+			title   string
+			urlSlug string
+		)
+		rows.Scan(&title, &urlSlug)
+		posts = append(posts, Post{Title: title, URLSlug: urlSlug})
+	}
+	t, _ := template.ParseFiles("views/index.html")
+	t.Execute(w, HomeData{Posts: posts})
+}
+
 	w.Write(body)
 }
 
