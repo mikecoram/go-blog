@@ -1,3 +1,8 @@
 #!/bin/bash
+# Create DB, init with schema and seed data
+docker-compose up -d
+docker exec -it go-blog-db psql -Upostgres -dblog -c "$(cat db/schema.sql)"
+docker exec -it go-blog-db psql -Upostgres -dblog -c "$(cat db/seed.sql)"
+# Build and run go app
 go build -o bin/blog
 ./bin/blog

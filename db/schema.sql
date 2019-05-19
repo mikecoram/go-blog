@@ -1,0 +1,9 @@
+DROP TABLE IF EXISTS posts;
+
+CREATE TABLE posts (
+    id SERIAL PRIMARY KEY,
+    title VARCHAR NOT NULL,
+    content TEXT NOT NULL,
+    url_slug VARCHAR NOT NULL UNIQUE,
+    created_on TIMESTAMP NOT NULL
+);
