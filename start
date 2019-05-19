@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 # Create DB, init with schema and seed data
 docker-compose up -d
 docker exec -it go-blog-db psql -Upostgres -dblog -c "$(cat db/schema.sql)"

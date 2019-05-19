@@ -2,9 +2,10 @@
 
 ## Start
 
-* Builds go project.
 * Starts Postgres docker container.
-* Runs 'db/schema.sql' on the Postgres db.
+* Runs 'db/schema.sql' and 'db/seed.sql' on the Postgres db.
+* Builds go project.
+* Runs the built go project.
 
 ```bash
 ./start
