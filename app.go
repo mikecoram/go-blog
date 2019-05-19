@@ -4,24 +4,57 @@ import (
 	"database/sql"
 	"fmt"
 	"html/template"
+	"io/ioutil"
 	"log"
 	"net/http"
+	"strings"
 
 	_ "github.com/lib/pq"
 )
 
-// Page object
-type Page struct {
-	Title string
+// Post object
+type Post struct {
+	Title   string
+	Content string
+}
+
+func homeHandler(w http.ResponseWriter, r *http.Request) {
+	body, _ := ioutil.ReadFile("views/index.html")
+	w.Write(body)
 }
 
 func postHandler(w http.ResponseWriter, r *http.Request) {
-	t, _ := template.ParseFiles("views/post.html")
-	t.Execute(w, &Page{Title: "My Title"})
+	slug := strings.Split(strings.ToLower(r.URL.Path), "/post/")[1]
+
+	db := getDbConnection()
+	rows, err := db.Query("SELECT title, content FROM posts WHERE url_slug = $1", slug)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "Something went wrong!", http.StatusInternalServerError)
+	}
+
+	if rows.Next() {
+		var (
+			title   string
+			content string
+		)
+		rows.Scan(&title, &content)
+		t, _ := template.ParseFiles("views/post.html")
+		t.Execute(w, &Post{Title: title, Content: content})
+	} else {
+		http.NotFound(w, r)
+	}
 }
 
 func getDbConnection() (db *sql.DB) {
-	db, err := sql.Open("postgres", "user=postgres password=secret dbname=go-blog sslmode=disable")
+	db, err := sql.Open("postgres", `
+		host=127.0.0.1
+		port=5432
+		user=postgres
+		password=secret
+		dbname=blog
+		sslmode=disable
+	`)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -29,7 +62,7 @@ func getDbConnection() (db *sql.DB) {
 }
 
 func main() {
-	getDbConnection()
+	http.HandleFunc("/", homeHandler)
 	http.HandleFunc("/post/", postHandler)
 	fmt.Printf("Listening on localhost:8080...\n")
 	log.Fatal(http.ListenAndServe(":8080", nil))
