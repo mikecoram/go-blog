@@ -44,7 +44,30 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 	t.Execute(w, HomeData{Posts: posts})
 }
 
-	w.Write(body)
+func newPostHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "GET" {
+		body, _ := ioutil.ReadFile("views/new_post.html")
+		w.Header().Add("Content-Type", "text/html; charset=utf-8")
+		w.Write(body)
+	} else if r.Method == "POST" {
+		r.ParseForm()
+		title := r.PostFormValue("title")
+		content := r.PostFormValue("content")
+		slug := strings.ReplaceAll(strings.ToLower(title), " ", "-")
+
+		db := getDbConnection()
+		_, err := db.Query(`
+			INSERT INTO posts
+			(title, content, url_slug, created_on)
+			VALUES
+			($1, $2, $3, NOW());
+		`, title, content, slug)
+		if err == nil {
+			http.Redirect(w, r, "/home", http.StatusFound)
+		} else {
+			http.Error(w, "Failed to save the post.", http.StatusInternalServerError)
+		}
+	}
 }
 
 func postHandler(w http.ResponseWriter, r *http.Request) {
@@ -87,7 +110,9 @@ func getDbConnection() (db *sql.DB) {
 
 func main() {
 	http.HandleFunc("/", homeHandler)
+	http.HandleFunc("/new-post/", newPostHandler)
 	http.HandleFunc("/post/", postHandler)
+
 	fmt.Printf("Listening on localhost:8080...\n")
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
